@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Linking, Text, View } from 'react-native';
 
 import { Button, Header, Screen, T } from '@/components/ui';
 import { useData } from '@/lib/data';
-import { useColors } from '@/lib/theme';
+import { PHOTO_CREDITS } from '@/lib/photos';
+import { fonts, useColors } from '@/lib/theme';
 
 const POINTS = [
   ['Qué ven los demás', 'Las entidades ven tu nombre de pila, tu zona, tu disponibilidad y tus insignias, y solo si les diste “¡Dale!”. Nunca tu email ni tu teléfono.'],
@@ -30,6 +31,19 @@ export default function Privacy() {
           <T>{d}</T>
         </View>
       ))}
+
+      <View style={{ gap: 4 }}>
+        <T variant="label">Fotos</T>
+        <T variant="muted" style={{ fontSize: 13 }}>
+          Las fotos de portada son de Unsplash, con licencia libre. Gracias a{' '}
+          {PHOTO_CREDITS.map((p, i) => (
+            <Text key={p.file} style={{ color: c.celeste, fontFamily: fonts.bodySemi }} onPress={() => Linking.openURL(p.photo_url)}>
+              {p.author}
+              {i < PHOTO_CREDITS.length - 1 ? ', ' : '.'}
+            </Text>
+          ))}
+        </T>
+      </View>
 
       {session ? (
         <View style={{ gap: 10, marginTop: 8 }}>

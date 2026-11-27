@@ -1,9 +1,11 @@
 import { router } from 'expo-router';
-import { Text, View } from 'react-native';
+import { Image } from 'expo-image';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { Button, Header, Screen, T } from '@/components/ui';
 import { useData } from '@/lib/data';
 import type { Role } from '@/lib/types';
+import { WELCOME_PHOTO } from '@/lib/photos';
 import { fonts, useColors } from '@/lib/theme';
 
 export default function Welcome() {
@@ -24,10 +26,12 @@ export default function Welcome() {
   return (
     <Screen header={<Header right={<T variant="small">Argentina</T>} />}>
       <View style={{ flex: 1, justifyContent: 'center', gap: 22 }}>
-        <View style={{ height: 150, borderRadius: 24, backgroundColor: c.celesteSoft, overflow: 'hidden', justifyContent: 'flex-end', padding: 16 }}>
-          <View style={{ position: 'absolute', right: 40, top: 32, width: 54, height: 54, borderRadius: 27, backgroundColor: c.sol }} />
-          <Text style={{ fontFamily: fonts.display, fontSize: 22, color: c.ink }}>1 hora tuya</Text>
-          <T variant="muted">alcanza para que un merendero abra el sábado</T>
+        <View style={{ height: 190, borderRadius: 24, overflow: 'hidden', justifyContent: 'flex-end', padding: 16, backgroundColor: c.celesteSoft }}>
+          <Image source={WELCOME_PHOTO} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityLabel="Manos de varias personas juntas" />
+          <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(20,33,61,0.38)' }]} />
+          <View style={{ position: 'absolute', right: 18, top: 18, width: 44, height: 44, borderRadius: 22, backgroundColor: c.sol }} />
+          <Text style={{ fontFamily: fonts.display, fontSize: 24, color: '#fff' }}>1 hora tuya</Text>
+          <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: '#fff' }}>alcanza para que un merendero abra el sábado</Text>
         </View>
         <T variant="h1">
           Hacé <Text style={{ color: c.celeste }}>match</Text> con una buena causa cerca tuyo.

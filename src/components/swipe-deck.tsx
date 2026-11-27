@@ -1,7 +1,10 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
 import { Animated, PanResponder, Platform, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
+import { Image } from 'expo-image';
+
 import { Tag, T } from './ui';
+import { CAUSE_PHOTOS } from '@/lib/photos';
 import type { Opportunity } from '@/lib/types';
 import { coverFor, coverInk, fonts, initials, useColors } from '@/lib/theme';
 
@@ -10,6 +13,8 @@ export function OppCard({ o, style }: { o: Opportunity; style?: object }) {
   return (
     <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.line }, style]}>
       <View style={[styles.cover, { backgroundColor: coverFor(o.orgId) }]}>
+        <Image source={CAUSE_PHOTOS[o.cause]} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} accessibilityIgnoresInvertColors />
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(20,33,61,0.12)' }]} />
         <View style={[styles.pill, { left: 14, backgroundColor: 'rgba(255,255,255,0.92)' }]}>
           <Text style={{ fontFamily: fonts.bodyBold, fontSize: 12, color: coverInk }}>{o.cause}</Text>
         </View>
@@ -18,7 +23,9 @@ export function OppCard({ o, style }: { o: Opportunity; style?: object }) {
             {o.distanceKm != null ? `a ~${o.distanceKm} km` : o.zone === 'Remoto' ? 'Remoto' : o.zone.split(',')[0]}
           </Text>
         </View>
-        <Text style={{ fontFamily: fonts.display, fontSize: 64, lineHeight: 64, color: coverInk }}>{initials(o.orgName)}</Text>
+        <View style={[styles.badge, { backgroundColor: coverFor(o.orgId), borderColor: c.surface }]}>
+          <Text style={{ fontFamily: fonts.display, fontSize: 24, color: coverInk }}>{initials(o.orgName)}</Text>
+        </View>
       </View>
       <View style={{ padding: 16, gap: 8, flex: 1 }}>
         <T variant="h3">{o.orgName}</T>
@@ -48,24 +55,28 @@ export const SwipeDeck = forwardRef<DeckHandle, { items: Opportunity[]; onSwipe:
   function SwipeDeck({ items, onSwipe }, ref) {
     const c = useColors();
     const { width } = useWindowDimensions();
-    const pos = useRef(new Animated.ValueXY()).current;
     const top = items[0];
+    // Animated values, the fling handler and the pan responder are created once and kept in state
+    // (not read from refs during render), which keeps the React Compiler happy.
+    const [pos] = useState(() => new Animated.ValueXY());
     const busy = useRef(false);
-    const latest = useRef({ top, onSwipe });
-    latest.current = { top, onSwipe };
+    const latest = useRef({ top, onSwipe, width });
+    useLayoutEffect(() => {
+      latest.current = { top, onSwipe, width };
+    });
 
     useEffect(() => {
       pos.setValue({ x: 0, y: 0 });
       busy.current = false;
     }, [top?.id, pos]);
 
-    const fling = (liked: boolean) => {
-      const { top: t, onSwipe: cb } = latest.current;
+    const [fling] = useState(() => (liked: boolean) => {
+      const { top: t, onSwipe: cb, width: w } = latest.current;
       if (!t || busy.current) return;
       busy.current = true;
-      Animated.timing(pos, { toValue: { x: (liked ? 1 : -1) * (width + 200), y: 40 }, duration: 240, useNativeDriver: Platform.OS !== 'web' }).start(() => cb(t, liked));
-    };
-    useImperativeHandle(ref, () => ({ swipe: fling }));
+      Animated.timing(pos, { toValue: { x: (liked ? 1 : -1) * (w + 200), y: 40 }, duration: 240, useNativeDriver: Platform.OS !== 'web' }).start(() => cb(t, liked));
+    });
+    useImperativeHandle(ref, () => ({ swipe: fling }), [fling]);
 
     useEffect(() => {
       if (Platform.OS !== 'web') return;
@@ -77,9 +88,9 @@ export const SwipeDeck = forwardRef<DeckHandle, { items: Opportunity[]; onSwipe:
       };
       window.addEventListener('keydown', h);
       return () => window.removeEventListener('keydown', h);
-    });
+    }, [fling]);
 
-    const responder = useRef(
+    const [responder] = useState(() =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 4,
@@ -89,7 +100,7 @@ export const SwipeDeck = forwardRef<DeckHandle, { items: Opportunity[]; onSwipe:
           else Animated.spring(pos, { toValue: { x: 0, y: 0 }, useNativeDriver: Platform.OS !== 'web', friction: 6 }).start();
         },
       }),
-    ).current;
+    );
 
     if (!top) return null;
     const rotate = pos.x.interpolate({ inputRange: [-300, 0, 300], outputRange: ['-16deg', '0deg', '16deg'] });
@@ -130,7 +141,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 4,
   },
-  cover: { height: '36%', minHeight: 120, justifyContent: 'flex-end', padding: 16 },
+  cover: { height: '40%', minHeight: 140, justifyContent: 'flex-end', padding: 14, overflow: 'hidden' },
+  badge: { width: 58, height: 58, borderRadius: 18, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
   pill: { position: 'absolute', top: 14, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   stamp: { position: 'absolute', top: 24, borderWidth: 4, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 2 },
   stampText: { fontFamily: fonts.display, fontSize: 30 },

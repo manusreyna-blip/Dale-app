@@ -21,17 +21,24 @@ export default function Chat() {
   const [notice, setNotice] = useState<string | null>(null);
   const scroll = useRef<ScrollView>(null);
 
-  const load = useCallback(async () => {
-    const [i, m] = await Promise.all([api.getMatchTitle(id), api.listMessages(id)]);
-    setInfo(i);
-    setMsgs(m);
-    setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 50);
-  }, [api, id]);
+  // Bumping `tick` reloads the conversation (after sending, confirming, or a realtime event).
+  const [tick, setTick] = useState(0);
+  const load = useCallback(() => setTick((t) => t + 1), []);
 
   useEffect(() => {
-    load();
-    return api.subscribeMessages(id, load);
-  }, [api, id, load]);
+    let alive = true;
+    Promise.all([api.getMatchTitle(id), api.listMessages(id)]).then(([i, m]) => {
+      if (!alive) return;
+      setInfo(i);
+      setMsgs(m);
+      setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 50);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [api, id, tick]);
+
+  useEffect(() => api.subscribeMessages(id, load), [api, id, load]);
 
   const send = async (body: string) => {
     const t = body.trim();

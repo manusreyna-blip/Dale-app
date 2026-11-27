@@ -55,6 +55,10 @@ npm start          # escaneá el QR con la app Expo Go (iOS / Android)
 - **Web:** el workflow `.github/workflows/deploy-web.yml` publica la web en GitHub Pages con cada push a `main`. Hay que activarlo en Settings → Pages → Source: "GitHub Actions". Para el modo real, cargá las dos variables `EXPO_PUBLIC_…` en Settings → Secrets and variables → Actions → **Variables**.
 - **iOS / Android:** con EAS (`npx eas-cli@latest build`). Hace falta una cuenta de Apple Developer (USD 99 por año) y de Google Play (USD 25, pago único).
 
+## Fotos
+
+Las portadas por causa (`assets/images/causes/`) son de Unsplash, con la Unsplash License (uso libre, también comercial). Los créditos están en `credits.json` y se muestran en la pantalla de privacidad. Regla para fotos que suban las entidades: **sin caras reconocibles de chicos** (Ley 26.061).
+
 ## Estructura
 
 ```
