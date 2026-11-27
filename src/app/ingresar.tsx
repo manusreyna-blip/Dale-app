@@ -4,10 +4,13 @@ import { View } from 'react-native';
 
 import { Button, ErrorText, Field, Header, Privacy, Screen, T } from '@/components/ui';
 import { useData } from '@/lib/data';
+import { rememberRole } from '@/lib/pending-role';
+import { fonts, useColors } from '@/lib/theme';
 import type { Role } from '@/lib/types';
 
 export default function Login() {
   const { rol } = useLocalSearchParams<{ rol: Role }>();
+  const c = useColors();
   const { api, refresh } = useData();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -39,7 +42,7 @@ export default function Login() {
   return (
     <Screen header={<Header onBack={() => router.back()} />}>
       <T variant="h2">{role === 'org' ? 'Sumá tu entidad' : 'Sumate como voluntario/a'}</T>
-      <T variant="muted">Sin contraseñas: te mandamos un código de 6 dígitos a tu email.</T>
+      <T variant="muted">Sin contraseñas: te mandamos un mail para entrar.</T>
 
       {api.mode === 'demo' ? (
         <View style={{ gap: 12 }}>
@@ -49,12 +52,18 @@ export default function Login() {
       ) : !sent ? (
         <View style={{ gap: 12 }}>
           <Field label="Email" value={email} onChangeText={setEmail} placeholder="tu@email.com" keyboardType="email-address" autoCapitalize="none" autoComplete="email" inputMode="email" />
-          <Button title="Enviarme el código" disabled={!validEmail} loading={busy} onPress={() => run(async () => { await api.sendLoginCode(email.trim()); setSent(true); })} />
+          <Button title="Enviarme el acceso" disabled={!validEmail} loading={busy} onPress={() => run(async () => { await rememberRole(role); await api.sendLoginCode(email.trim()); setSent(true); })} />
         </View>
       ) : (
         <View style={{ gap: 12 }}>
-          <Field label="Código" value={code} onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 6))} placeholder="123456" keyboardType="number-pad" autoComplete="one-time-code" hint={`Lo mandamos a ${email}. Revisá spam si no llega.`} />
-          <Button title="Entrar" disabled={code.length !== 6} loading={busy} onPress={() => run(async () => finish(await api.verifyLoginCode(email.trim(), code)))} />
+          <View style={{ backgroundColor: c.celesteSoft, borderRadius: 14, padding: 14, gap: 4 }}>
+            <T style={{ fontFamily: fonts.bodyBold }}>Revisá tu email</T>
+            <T variant="muted" style={{ color: c.ink }}>
+              Te mandamos un mail a {email}. Tocá el botón o link del mail y vas a entrar directo. Si no llega en un par de minutos, revisá Spam o Promociones.
+            </T>
+          </View>
+          <Field label="¿El mail trae un código? Ingresalo acá" value={code} onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 6))} placeholder="123456" keyboardType="number-pad" autoComplete="one-time-code" />
+          <Button title="Entrar con el código" disabled={code.length !== 6} loading={busy} onPress={() => run(async () => finish(await api.verifyLoginCode(email.trim(), code)))} />
           <Button kind="ghost" title="Cambiar email" onPress={() => { setSent(false); setCode(''); }} />
         </View>
       )}

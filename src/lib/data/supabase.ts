@@ -11,7 +11,9 @@ function client(url: string, key: string): SupabaseClient {
       storage: Platform.OS === 'web' ? undefined : AsyncStorage,
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: false,
+      // Web: the login link in the email brings the session back in the URL.
+      detectSessionInUrl: Platform.OS === 'web',
+      flowType: 'implicit',
     },
   });
 }
@@ -85,7 +87,8 @@ export function createSupabaseApi(url: string, key: string): DataApi {
       return () => data.subscription.unsubscribe();
     },
     async sendLoginCode(email) {
-      check(await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } }));
+      const emailRedirectTo = Platform.OS === 'web' && typeof window !== 'undefined' ? `${window.location.origin}/` : undefined;
+      check(await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo } }));
     },
     async verifyLoginCode(email, token) {
       check(await sb.auth.verifyOtp({ email, token, type: 'email' }));
