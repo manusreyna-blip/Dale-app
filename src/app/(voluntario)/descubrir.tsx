@@ -1,12 +1,17 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, Share, Text, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 
+import { StoryShareModal } from '@/components/story-card';
 import { SwipeDeck, type DeckHandle } from '@/components/swipe-deck';
 import { Button, Chip, Header, Loading, Privacy, Screen, Sheet, T, Tag } from '@/components/ui';
 import { useData } from '@/lib/data';
+import { CAUSE_PHOTOS } from '@/lib/photos';
 import type { Opportunity, VolunteerProfile } from '@/lib/types';
 import { fonts, useColors } from '@/lib/theme';
+
+const HINT_KEY = 'dale.swipeHint.v1';
 
 type Result = { o: Opportunity; status: 'accepted' | 'pending'; matchId: string };
 
@@ -42,6 +47,7 @@ export default function Discover() {
   const visible = (items ?? []).filter((o) => !filter || o.cause === filter);
 
   const onSwipe = async (o: Opportunity, liked: boolean) => {
+    if (hint) dismissHint();
     setItems((xs) => (xs ?? []).filter((x) => x.id !== o.id));
     try {
       const r = await api.swipe(o.id, liked);
@@ -51,10 +57,17 @@ export default function Discover() {
     }
   };
 
-  const share = async (o: Opportunity) => {
-    try {
-      await Share.share({ message: `Me sumé como voluntario/a a ${o.orgName} con dale. ${o.impact}. ¿Te sumás? https://dale.ar` });
-    } catch {}
+  const [story, setStory] = useState<Opportunity | null>(null);
+  const [hint, setHint] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem(HINT_KEY)
+      .then((v) => setHint(v !== 'done'))
+      .catch(() => setHint(true));
+  }, []);
+  const dismissHint = () => {
+    setHint(false);
+    AsyncStorage.setItem(HINT_KEY, 'done').catch(() => {});
   };
 
   return (
@@ -80,7 +93,18 @@ export default function Discover() {
         </View>
       ) : (
         <>
-          <SwipeDeck ref={deck} items={visible} onSwipe={onSwipe} />
+          {hint ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: c.celesteSoft, borderRadius: 14, padding: 12 }}>
+              <T style={{ flex: 1, fontSize: 14 }}>
+                Deslizá a la <Text style={{ fontFamily: fonts.bodyBold, color: c.yes }}>derecha</Text> si te sumás y a la{' '}
+                <Text style={{ fontFamily: fonts.bodyBold, color: c.no }}>izquierda</Text> si pasás. También podés usar los botones.
+              </T>
+              <Pressable onPress={dismissHint} accessibilityRole="button" hitSlop={8}>
+                <Text style={{ fontFamily: fonts.bodyBold, color: c.celeste }}>Entendido</Text>
+              </Pressable>
+            </View>
+          ) : null}
+          <SwipeDeck ref={deck} items={visible} onSwipe={onSwipe} hint={hint} />
           <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 18 }}>
             <RoundBtn label="Paso" glyph="✕" color={c.no} size={60} onPress={() => deck.current?.swipe(false)} />
             <RoundBtn label="Ver más" glyph="i" color={c.celeste} size={46} onPress={() => setInfo(visible[0])} />
@@ -121,7 +145,15 @@ export default function Discover() {
                 if (r.status === 'accepted') router.push({ pathname: '/chat/[id]', params: { id: r.matchId } });
               }}
             />
-            <Button kind="ghost" title="Compartir" onPress={() => share(result.o)} />
+            <Button
+              kind="ghost"
+              title="Compartir en historias"
+              onPress={() => {
+                const o = result.o;
+                setResult(null);
+                setStory(o);
+              }}
+            />
           </Sheet>
         ) : null}
       </Modal>
@@ -144,6 +176,14 @@ export default function Discover() {
           </Sheet>
         ) : null}
       </Modal>
+      {story ? (
+        <StoryShareModal
+          visible
+          onClose={() => setStory(null)}
+          filename="dale-me-sume.png"
+          card={{ photo: CAUSE_PHOTOS[story.cause], eyebrow: `Voluntariado · ${story.cause}`, title: `Me sumé a ${story.orgName}`, subtitle: story.impact || undefined }}
+        />
+      ) : null}
     </Screen>
   );
 }

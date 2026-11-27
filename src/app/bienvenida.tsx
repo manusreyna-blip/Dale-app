@@ -42,6 +42,9 @@ export default function Welcome() {
         <View style={{ gap: 12 }}>
           <Button title="Quiero ayudar" onPress={() => choose('volunteer')} />
           <Button kind="ghost" title="Somos una entidad y necesitamos ayuda" onPress={() => choose('org')} />
+          <Text onPress={() => router.push('/entidades')} style={{ textAlign: 'center', fontFamily: fonts.bodySemi, color: c.celeste, paddingVertical: 4 }}>
+            ¿Tenés un comedor, hogar o club? Mirá cómo funciona
+          </Text>
         </View>
         <T variant="muted" style={{ fontSize: 13 }}>
           Tus datos no se comparten con nadie hasta que haya match.{' '}

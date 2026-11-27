@@ -51,8 +51,8 @@ export function OppCard({ o, style }: { o: Opportunity; style?: object }) {
 
 export type DeckHandle = { swipe: (liked: boolean) => void };
 
-export const SwipeDeck = forwardRef<DeckHandle, { items: Opportunity[]; onSwipe: (o: Opportunity, liked: boolean) => void }>(
-  function SwipeDeck({ items, onSwipe }, ref) {
+export const SwipeDeck = forwardRef<DeckHandle, { items: Opportunity[]; onSwipe: (o: Opportunity, liked: boolean) => void; hint?: boolean }>(
+  function SwipeDeck({ items, onSwipe, hint }, ref) {
     const c = useColors();
     const { width } = useWindowDimensions();
     const top = items[0];
@@ -69,6 +69,17 @@ export const SwipeDeck = forwardRef<DeckHandle, { items: Opportunity[]; onSwipe:
       pos.setValue({ x: 0, y: 0 });
       busy.current = false;
     }, [top?.id, pos]);
+
+    // First-time hint: nudge the card right (¡DALE!) and left (PASO) so the gesture is obvious.
+    const topId = top?.id;
+    useEffect(() => {
+      if (!hint || !topId) return;
+      const native = Platform.OS !== 'web';
+      const to = (x: number, duration: number) => Animated.timing(pos, { toValue: { x, y: 0 }, duration, useNativeDriver: native });
+      const anim = Animated.sequence([Animated.delay(700), to(90, 380), to(0, 300), Animated.delay(250), to(-90, 380), to(0, 300)]);
+      anim.start();
+      return () => anim.stop();
+    }, [hint, topId, pos]);
 
     const [fling] = useState(() => (liked: boolean) => {
       const { top: t, onSwipe: cb, width: w } = latest.current;
@@ -94,6 +105,7 @@ export const SwipeDeck = forwardRef<DeckHandle, { items: Opportunity[]; onSwipe:
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 4,
+        onPanResponderGrant: () => pos.stopAnimation(),
         onPanResponderMove: (_, g) => pos.setValue({ x: g.dx, y: g.dy * 0.3 }),
         onPanResponderRelease: (_, g) => {
           if (Math.abs(g.dx) > 110 || Math.abs(g.vx) > 0.8) fling(g.dx > 0);

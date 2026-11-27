@@ -8,7 +8,7 @@
     "scheme": "dale",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/icon.png",
       "bundleIdentifier": "ar.dale.app"
     },
     "android": {
@@ -23,7 +23,9 @@
     },
     "web": {
       "output": "single",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "themeColor": "#2B93D1",
+      "lang": "es-AR"
     },
     "plugins": [
       "expo-router",

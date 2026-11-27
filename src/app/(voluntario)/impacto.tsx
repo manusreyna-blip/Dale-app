@@ -2,8 +2,10 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Share, Text, View } from 'react-native';
 
+import { StoryShareModal } from '@/components/story-card';
 import { Button, Header, Privacy, Screen, T } from '@/components/ui';
 import { useData } from '@/lib/data';
+import { WELCOME_PHOTO } from '@/lib/photos';
 import type { Impact } from '@/lib/types';
 import { fonts, useColors } from '@/lib/theme';
 
@@ -21,6 +23,7 @@ export default function ImpactScreen() {
   const { api } = useData();
   const [impact, setImpact] = useState<Impact>({ matches: 0, meetings: 0, hours: 0, causes: 0 });
   const [name, setName] = useState('');
+  const [story, setStory] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -32,7 +35,7 @@ export default function ImpactScreen() {
   const invite = async () => {
     try {
       await Share.share({
-        message: `${name ? name + ' te invita' : 'Te invito'} a dale., la app para hacer match con causas de tu barrio. Con 1 hora alcanza. https://dale.ar`,
+        message: `${name ? name + ' te invita' : 'Te invito'} a dale., la app para hacer match con causas de tu barrio. Con 1 hora alcanza. https://dale-ap.netlify.app`,
       });
     } catch {}
   };
@@ -73,7 +76,19 @@ export default function ImpactScreen() {
           {impact.hours > 0 ? `Doné ${impact.hours} horas a causas de mi barrio. ¿Te sumás?` : 'Me sumé a dale. para dar una mano en mi barrio. ¿Te sumás?'}
         </Text>
       </View>
-      <Button kind="sol" title="Invitar a un amigo" onPress={invite} />
+      <Button kind="sol" title="Compartir en historias" onPress={() => setStory(true)} />
+      <Button kind="ghost" title="Invitar a un amigo" onPress={invite} />
+      <StoryShareModal
+        visible={story}
+        onClose={() => setStory(false)}
+        filename="dale-mi-impacto.png"
+        card={{
+          photo: WELCOME_PHOTO,
+          eyebrow: 'Mi impacto en dale.',
+          title: impact.hours > 0 ? `Doné ${impact.hours} horas a causas de mi barrio` : 'Me sumé a dar una mano en mi barrio',
+          subtitle: impact.matches > 0 ? `${impact.matches} ${impact.matches === 1 ? 'causa' : 'causas'} con las que hice match` : 'Con 1 hora alcanza.',
+        }}
+      />
       <Privacy>¿Trabajás en una empresa? Pueden armar un desafío de equipo. Las personas y las entidades nunca pagan.</Privacy>
     </Screen>
   );
