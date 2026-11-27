@@ -1,0 +1,22 @@
+# Netlify: compila la versión web de dale. en cada push a main.
+# Sin las variables EXPO_PUBLIC_SUPABASE_* (Site settings → Environment variables) la web queda en modo demo.
+[build]
+  command = "npx expo export --platform web"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  EXPO_BASE_URL = ""
+
+# Todas las rutas (/descubrir, /chat/123, ...) las resuelve la app
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

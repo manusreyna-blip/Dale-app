@@ -51,6 +51,7 @@ npm start          # escaneá el QR con la app Expo Go (iOS / Android)
 
 ## Publicar
 
+- **Web en Netlify (actual):** `netlify.toml` ya tiene la configuración. En Netlify: Add new site → Import from GitHub → `dale-app`. Para el modo real, cargá las dos variables `EXPO_PUBLIC_…` en Site configuration → Environment variables.
 - **Web:** el workflow `.github/workflows/deploy-web.yml` publica la web en GitHub Pages con cada push a `main`. Hay que activarlo en Settings → Pages → Source: "GitHub Actions". Para el modo real, cargá las dos variables `EXPO_PUBLIC_…` en Settings → Secrets and variables → Actions → **Variables**.
 - **iOS / Android:** con EAS (`npx eas-cli@latest build`). Hace falta una cuenta de Apple Developer (USD 99 por año) y de Google Play (USD 25, pago único).
 

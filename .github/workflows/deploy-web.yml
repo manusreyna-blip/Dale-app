@@ -1,8 +1,7 @@
 name: Publicar web (GitHub Pages)
 
+# Desactivado: la web se publica en Netlify. Se puede correr a mano desde Actions.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
