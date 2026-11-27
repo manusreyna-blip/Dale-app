@@ -5,4 +5,3 @@ create function auth.uid() returns uuid language sql stable as $$ select nullif(
 grant execute on function auth.uid() to authenticated, anon;
 create publication supabase_realtime;
 grant usage on schema public to authenticated, anon;
-alter default privileges in schema public grant all on tables to authenticated, anon;

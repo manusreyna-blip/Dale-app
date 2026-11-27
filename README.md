@@ -43,7 +43,7 @@ npm start          # escaneá el QR con la app Expo Go (iOS / Android)
 ## Activar el modo real (Supabase)
 
 1. Creá un proyecto gratis en https://supabase.com. Elegí la región São Paulo, que es la más cercana a Argentina.
-2. En **SQL Editor**, pegá y ejecutá el contenido de `supabase/migrations/0001_init.sql`.
+2. En **SQL Editor**, pegá y ejecutá, en orden, `supabase/migrations/0001_init.sql` y `supabase/migrations/0002_grants.sql`.
 3. En **Authentication → Providers → Email**, dejá activado "Email OTP".
 4. En **Authentication → Email Templates → Magic Link**, poné `{{ .Token }}` en el cuerpo para que el mail incluya el código de 6 dígitos.
 5. Copiá `.env.example` como `.env` y completá `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY` (están en **Settings → API**). La clave "anon" es pública por diseño: la seguridad la dan las reglas de la base. **Nunca** pongas la clave "service_role" en la app.
