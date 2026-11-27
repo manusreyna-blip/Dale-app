@@ -1,56 +1,77 @@
-# Welcome to your Expo app 👋
+# dale.
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+App para hacer *match* entre personas con ganas de ayudar y entidades chicas (comedores, merenderos, hogares, clubes, grupos de vecinos) que necesitan una mano. Funciona en **iOS, Android y web** con un solo código (Expo + React Native) y usa **Supabase** como base de datos.
 
-## Get started
+## Qué incluye el MVP
 
-1. Install dependencies
+**Voluntarios**
+- Ingreso sin contraseña, con un código por email.
+- Perfil en un minuto: disponibilidad ("1–2 h por semana", "Fines de semana", "Una sola vez", "Remoto"), causas, nombre de pila y barrio.
+- Descubrir: tarjetas para deslizar (derecha = ¡Dale!, izquierda = paso; también con botones o con las flechas del teclado en la web). Primero aparece lo que encaja con tu disponibilidad.
+- Match: algunas entidades aceptan automáticamente y otras revisan cada pedido.
+- Chat interno, confirmación del primer encuentro y botón para reportar.
+- Mi impacto: horas, matches, causas, insignias e invitar amigos.
 
-   ```bash
-   npm install
-   ```
+**Entidades**
+- Alta en 3 pasos, con plantillas de pedido.
+- Verificación flexible: personería jurídica, referentes del barrio o fotos con una videollamada.
+- Panel de interesados para aceptar o rechazar, "Mi equipo" y chat.
 
-2. Start the app
+**Privacidad** (detalle en `supabase/migrations/0001_init.sql`)
+- Nadie ve el email ni el teléfono de nadie.
+- Las tarjetas muestran solo el barrio. La dirección exacta la ve únicamente la persona aceptada, después de confirmar el primer encuentro.
+- Una entidad solo ve a quienes le dieron "¡Dale!", y solo nombre de pila, zona, disponibilidad e insignias.
+- Las entidades no aparecen hasta que un administrador las verifica.
+- El certificado de antecedentes lo marca solo un administrador. Nadie puede autodeclararlo.
+- "Borrar mi cuenta" elimina todo (Ley 25.326).
+- Hay 20 pruebas automáticas de estas reglas en `supabase/tests`.
 
-   ```bash
-   npx expo start
-   ```
+## Modo demo vs. modo real
 
-In the output, you'll find options to open the app in a
+Sin variables de entorno, la app arranca en **modo demo**: muestra 10 entidades de ejemplo y guarda los datos solo en el dispositivo. Sirve para mostrarla a entidades y a posibles socios.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Con las variables de Supabase, pasa a **modo real**: cuentas, matches y chat en tiempo real entre personas reales.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Cómo correrla
 
 ```bash
-npm run reset-project
+npm install
+npm run web        # en el navegador
+npm start          # escaneá el QR con la app Expo Go (iOS / Android)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Activar el modo real (Supabase)
 
-### Other setup steps
+1. Creá un proyecto gratis en https://supabase.com. Elegí la región São Paulo, que es la más cercana a Argentina.
+2. En **SQL Editor**, pegá y ejecutá el contenido de `supabase/migrations/0001_init.sql`.
+3. En **Authentication → Providers → Email**, dejá activado "Email OTP".
+4. En **Authentication → Email Templates → Magic Link**, poné `{{ .Token }}` en el cuerpo para que el mail incluya el código de 6 dígitos.
+5. Copiá `.env.example` como `.env` y completá `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY` (están en **Settings → API**). La clave "anon" es pública por diseño: la seguridad la dan las reglas de la base. **Nunca** pongas la clave "service_role" en la app.
+6. Para verificar una entidad: en **Table Editor → organizations**, cambiá `verification_status` a `verified` y escribí en `verification_label` cómo se verificó (por ejemplo "Validada por 3 referentes del barrio"). Los datos para verificarla están en `org_private`.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Publicar
 
-## Learn more
+- **Web:** el workflow `.github/workflows/deploy-web.yml` publica la web en GitHub Pages con cada push a `main`. Hay que activarlo en Settings → Pages → Source: "GitHub Actions". Para el modo real, cargá las dos variables `EXPO_PUBLIC_…` en Settings → Secrets and variables → Actions → **Variables**.
+- **iOS / Android:** con EAS (`npx eas-cli@latest build`). Hace falta una cuenta de Apple Developer (USD 99 por año) y de Google Play (USD 25, pago único).
 
-To learn more about developing your project with Expo, look at the following resources:
+## Estructura
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
+src/app/                 pantallas (Expo Router)
+  bienvenida, ingresar, perfil, privacidad, alta-entidad, chat/[id]
+  (voluntario)/          descubrir, matches, impacto
+  (entidad)/             panel, equipo
+src/components/          UI, mazo de tarjetas, barra de pestañas
+src/lib/data/            demo.ts (modo demo) · supabase.ts (modo real) · seed.ts (ejemplos)
+supabase/migrations/     esquema y reglas de seguridad
+supabase/tests/          pruebas de privacidad
+```
 
-## Join the community
+## Próximos pasos sugeridos
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Notificaciones push (nuevo match, mensaje nuevo).
+- Distancia real a partir de la zona (geocodificación aproximada, sin guardar direcciones de voluntarios).
+- Carga del certificado de antecedentes y flujo de revisión.
+- Panel de administración para verificar entidades.
+- Varios pedidos por entidad.
+- Desafíos para empresas (modelo de ingresos).
